@@ -1,0 +1,31 @@
+name: Construire EdgeEver pour Cloudflare
+
+# Compile l'application web et le Worker, sans aucun secret ni déploiement.
+# Le résultat est téléchargé puis déployé depuis un poste avec Wrangler.
+on:
+  push:
+    branches: [construction]
+
+permissions:
+  contents: read
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - name: Installer les dépendances
+        run: bun install --frozen-lockfile
+      - name: Construire l'application web
+        run: bun run build
+      - name: Construire le Worker
+        run: bun run build:worker
+      - name: Empaqueter
+        run: tar -czf edgeever-cloudflare.tgz apps/web/dist .wrangler/edgeever-worker
+      - uses: actions/upload-artifact@v4
+        with:
+          name: edgeever-cloudflare
+          path: edgeever-cloudflare.tgz
+          retention-days: 7
